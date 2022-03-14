@@ -2,24 +2,18 @@ import { ethers } from 'ethers';
 import { Contract } from '@ethersproject/contracts';
 import { useCall, useContractFunction } from '@usedapp/core';
 import GameFiContractABI from '../abi/GameFiContractABI.json';
-import { ContractAddressByRinkeby, ContractAddress } from '../contracts';
+import { ContractAddressByRinkeby } from '../contracts';
 
 const GameFiContractABIInterface = new ethers.utils.Interface(GameFiContractABI);
 
 const GameFiContract = new Contract(
-  // ContractAddressByRinkeby,
-  ContractAddress,
+  ContractAddressByRinkeby,
   GameFiContractABIInterface
 );
 
 export const useBaseURI = () => {
-  // const { value, error } = useCall(ContractAddressByRinkeby && {
-  //   contract: new Contract(ContractAddressByRinkeby, GameFiContractABIInterface),
-  //   method: 'baseURI',
-  //   args: []
-  // }) ?? {}
-  const { value, error } = useCall(ContractAddress && {
-    contract: new Contract(ContractAddress, GameFiContractABIInterface),
+  const { value, error } = useCall(ContractAddressByRinkeby && {
+    contract: new Contract(ContractAddressByRinkeby, GameFiContractABIInterface),
     method: 'baseURI',
     args: []
   }) ?? {}

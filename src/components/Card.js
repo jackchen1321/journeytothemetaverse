@@ -47,8 +47,11 @@ const Card = (props) => {
 
     if (account) {
       approveState.status === 'Exception' && toast.error('approve_error',{position: toast.POSITION.TOP_RIGHT, autoClose:5000});
+      approveState.status === 'Success' && toast.success('success',{position: toast.POSITION.TOP_RIGHT, autoClose:5000});
       hardState.status === 'Exception' && toast.error('Lock_error',{position: toast.POSITION.TOP_RIGHT, autoClose:5000});
+      hardState.status === 'Success' && toast.success('success',{position: toast.POSITION.TOP_RIGHT, autoClose:5000});
       unHardState.status === 'Exception' && toast.error('unLock_error',{position: toast.POSITION.TOP_RIGHT, autoClose:5000});
+      unHardState.status === 'Success' && toast.success('success',{position: toast.POSITION.TOP_RIGHT, autoClose:5000});
     }
   }, [account])
   

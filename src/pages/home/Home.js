@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  Fragment,
-  useRef,
-} from 'react'
+import React, { useState, useEffect, Fragment, useRef } from 'react'
 import { useBaseURI } from '../../hooks/GameFiContract'
 import { useGetUserBalance, useWithdrawAURA } from '../../hooks/TokenContract'
 import {
@@ -16,49 +11,44 @@ import AppLayout from '../AppLayout'
 import { toast } from 'react-toastify'
 import CardList from './CardList'
 import { useEthers } from '@usedapp/core'
-import {
-  useMoralisWeb3Api,
-} from 'react-moralis'
+import { useMoralisWeb3Api } from 'react-moralis'
 import axios from 'axios'
 import './Home.scss'
-import { StakingContractAddress, ContractAddressByRinkeby, TokenContractAddress, ContractAddress } from '../../contracts';
-import { Loading } from '../../components/Loading/Loading';
+import { ContractAddressByRinkeby } from '../../contracts'
+import { Loading } from '../../components/Loading/Loading'
 
 const Home = () => {
   const [nftsList, setNftsList] = useState([])
   const [amount, setAmount] = useState([])
   const { account } = useEthers()
-  const Web3Api = useMoralisWeb3Api()
   const [open, setOpen] = useState(false)
   const cancelButtonRef = useRef(null)
   const lockNFTList = useGetHardStakingTokens(account)
   const totalStackedNFT = useGetTotalStakedNFTs()
   const totalHardStakers = useGetTotalHardStakers()
   const [loadingFlag, setLoadingFlag] = useState(false)
+  const Web3Api = useMoralisWeb3Api()
 
   const nfts = async () => {
-    // console.log(account)
-    // console.log(ContractAddressByRinkeby)
+    console.log(account, ContractAddressByRinkeby)
     const options = {
-      chain: "eth",
+      // chain: 'ropsten',
+      chain: 'eth',
       address: account,
-      // token_address: ContractAddressByRinkeby,
-      token_address: ContractAddress,
-    };
-    console.log("---moralis---->")
-    const result = await Web3Api.account.getNFTsForContract(options);
-    console.log("result-->", result);
+      token_address: ContractAddressByRinkeby,
+    }
+    console.log('---moralis---->')
+
+    const result = await Web3Api.account.getNFTsForContract(options)
+    console.log('result-->', result)
     return result
   }
 
   const fixURL = (url) => {
     if (url.startsWith('ipfs')) {
       return (
-        'https://ipfs.io/ipfs/' +
-        url
-          .split('ipfs://')
-          .slice(-1)[0]
-          // .substring(0, url.split('ipfs://').slice(-1)[0].length - 1)
+        'https://ipfs.io/ipfs/' + url.split('ipfs://').slice(-1)[0]
+        // .substring(0, url.split('ipfs://').slice(-1)[0].length - 1)
       )
     } else {
       return url + '?format=json'
@@ -99,9 +89,9 @@ const Home = () => {
   }
   const setNFTList = async () => {
     const nftList = await nfts()
-    console.log("nftList", nftList)
+    console.log('nftList', nftList)
     let nsList = []
-    setNftsList([]);
+    setNftsList([])
     for (let nft of nftList.result) {
       console.log('---->')
       console.log(nft)
@@ -134,47 +124,48 @@ const Home = () => {
   const { state: withDrawState, send: withdrawAURA } = useWithdrawAURA()
 
   const withDraw = async () => {
-    
-    try{
-      if(amount === 0) {
+    try {
+      if (amount === 0) {
         toast.error('amount must not 0', {
           position: toast.POSITION.TOP_RIGHT,
           autoClose: 2000,
         })
-        return;
+        return
       }
-      setLoadingFlag(true);
+      setLoadingFlag(true)
       setOpen(false)
       setAmount(0)
       await withdrawAURA(amount)
-      setLoadingFlag(false);
+      setLoadingFlag(false)
       toast.success('success', {
         position: toast.POSITION.TOP_RIGHT,
         autoClose: 2000,
       })
-    }catch(e){
-      console.log("eeeeee", e);
-      setLoadingFlag(false);
+    } catch (e) {
+      console.log('eeeeee', e)
+      setLoadingFlag(false)
       toast.error('error_mmm', {
         position: toast.POSITION.TOP_RIGHT,
         autoClose: 2000,
       })
-
     }
-
   }
   const closeWithDraw = () => {
-    setOpen(false);
-     setAmount(0);
+    setOpen(false)
+    setAmount(0)
   }
   const getUserBalance = useGetUserBalance(account)
 
   useEffect(() => {
     if (account) {
-      withDrawState.status === 'Exception' && toast.error('error',{position: toast.POSITION.TOP_RIGHT, autoClose:5000});
+      withDrawState.status === 'Exception' &&
+        toast.error('error', {
+          position: toast.POSITION.TOP_RIGHT,
+          autoClose: 5000,
+        })
       setNFTList()
     }
-  }, [account, lockNFTList ])
+  }, [account, lockNFTList])
   // }, [account])
 
   if (loadingFlag) {
@@ -182,7 +173,7 @@ const Home = () => {
   }
 
   return (
-    <AppLayout className="">
+    <AppLayout className=''>
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 flex flex-col items-center justify-center gap-y-10'>
         <div className='py-10 text-center w-full flex flex-wrap  items-center justify-between  gap-y-2 '>
           <div className='bg-stakingBanner bg-[length:100%_100%]  basis-[100%]  md:basis-[48%] px-10  py-5  flex flex-col text-center gap-5 rounded-2xl  shadow-lg shadow-gray-700/50'>
@@ -218,9 +209,6 @@ const Home = () => {
         {nftsList && <CardList nfts={nftsList} />}
 
         <div className=' pt-10 pb-20 text-center w-full flex flex-wrap  items-center justify-between gap-y-10'>
-          {/* <button className='basis-[100%] md:basis-[48%] text-lg font-bold rounded-2xl  text-white py-5   hover:text-white hover:text-xl bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 focus:outline-none focus:ring focus:ring-cyan-300 shadow-lg shadow-cyan-700/50'>
-            STAKE
-          </button> */}
           <button
             className='bg-withdrawBanner bg-[length:100%_100%] w-full text-lg font-bold rounded-2xl text-white py-5  hover:text-xl  focus:outline-none focus:ring focus:ring-indigo-300 shadow-lg shadow-indigo-700/50'
             onClick={() => (account ? setOpen(true) : '')}

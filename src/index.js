@@ -4,11 +4,12 @@ import './index.css'
 import App from './App'
 import reportWebVitals from './reportWebVitals'
 import { MoralisProvider } from 'react-moralis'
-const { REACT_APP_MORALIS_APPLICATION_ID, REACT_APP_SERVER_URL } = process.env
+const { REACT_APP_MORALIS_APPLICATION_ID, REACT_APP_SERVER_URL, REACT_APP_MORALIS_APPLICATION_MAIN_ID, REACT_APP_SERVER__MAIN_URL } = process.env
 
 ReactDOM.render(
   <React.StrictMode>
-    <MoralisProvider appId={REACT_APP_MORALIS_APPLICATION_ID} serverUrl={REACT_APP_SERVER_URL}>
+    {/* <MoralisProvider appId={REACT_APP_MORALIS_APPLICATION_ID} serverUrl={REACT_APP_SERVER_URL}> */}
+    <MoralisProvider appId={REACT_APP_MORALIS_APPLICATION_MAIN_ID} serverUrl={REACT_APP_SERVER__MAIN_URL}>
       <App />
     </MoralisProvider>
   </React.StrictMode>,
