@@ -1,17 +1,17 @@
-import React, { useState } from 'react'
-import { Loading } from '../../components/Loading/Loading'
-import Card from '../../components/Card'
+import React, { useState } from 'react';
+import { Loading } from '../../components/Loading/Loading';
+import Card from '../../components/Card';
 
 const CardList = (props) => {
-  const [loadingFlag, setLoadingFlag] = useState(false)
+  const [loadingFlag, setLoadingFlag] = useState(false);
 
   if (loadingFlag) {
-    return <Loading />
+    return <Loading />;
   }
 
   return (
     <div className='pt-16 mx-auto text-gray-600 body-font w-full '>
-      <div className='flex flex-wrap -m-4'>
+      <div className='flex flex-wrap -m-4 gap-2'>
         {props.nfts.map((item, index) => {
           return (
             <Card
@@ -19,12 +19,14 @@ const CardList = (props) => {
               key={item.edition}
               loadingFlag={loadingFlag}
               setLoadingFlag={setLoadingFlag}
+              handleSelected={props.handleSelected}
+              selectedIds={props.selectedIds}
             />
-          )
+          );
         })}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CardList
+export default CardList;

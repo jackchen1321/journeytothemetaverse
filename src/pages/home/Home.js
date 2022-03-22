@@ -1,76 +1,149 @@
-import React, { useState, useEffect, Fragment, useRef } from 'react'
-import { useBaseURI } from '../../hooks/GameFiContract'
-import { useGetUserBalance, useWithdrawAURA } from '../../hooks/TokenContract'
+import React, { useState, useEffect, Fragment, useRef } from 'react';
+import { useBaseURI } from '../../hooks/GameFiContract';
+import { useGetUserBalance, useWithdrawAURA } from '../../hooks/TokenContract';
 import {
   useGetHardStakingTokens,
   useGetTotalStakedNFTs,
   useGetTotalHardStakers,
-} from '../../hooks/StakingContract'
-import { Dialog, Transition } from '@headlessui/react'
-import AppLayout from '../AppLayout'
-import { toast } from 'react-toastify'
-import CardList from './CardList'
-import { useEthers } from '@usedapp/core'
-import { useMoralisWeb3Api } from 'react-moralis'
-import axios from 'axios'
-import './Home.scss'
-import { ContractAddressByRinkeby } from '../../contracts'
-import { Loading } from '../../components/Loading/Loading'
+  useHardMultiStake,
+  useUnHardMultiStake,
+} from '../../hooks/StakingContract';
+import { useApproveForAll } from '../../hooks/GameFiContract';
+import { Dialog, Transition } from '@headlessui/react';
+import AppLayout from '../AppLayout';
+import { toast } from 'react-toastify';
+import CardList from './CardList';
+import { useEthers } from '@usedapp/core';
+import { useMoralisWeb3Api } from 'react-moralis';
+import axios from 'axios';
+import './Home.scss';
+import {
+  ContractAddressByRinkeby,
+  StakingContractAddress,
+} from '../../contracts';
+import { Loading } from '../../components/Loading/Loading';
 
 const Home = () => {
-  const [nftsList, setNftsList] = useState([])
-  const [amount, setAmount] = useState([])
-  const { account } = useEthers()
-  const [open, setOpen] = useState(false)
-  const cancelButtonRef = useRef(null)
-  const lockNFTList = useGetHardStakingTokens(account)
-  const totalStackedNFT = useGetTotalStakedNFTs()
-  const totalHardStakers = useGetTotalHardStakers()
-  const [loadingFlag, setLoadingFlag] = useState(false)
-  const Web3Api = useMoralisWeb3Api()
+  const [nftsList, setNftsList] = useState([]);
+  const [amount, setAmount] = useState([]);
+  const { account } = useEthers();
+  const [open, setOpen] = useState(false);
+  const cancelButtonRef = useRef(null);
+  const lockNFTList = useGetHardStakingTokens(account);
+  const totalStackedNFT = useGetTotalStakedNFTs();
+  const totalHardStakers = useGetTotalHardStakers();
+  const [loadingFlag, setLoadingFlag] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const Web3Api = useMoralisWeb3Api();
+  const { state: hardMultiStakeState, send: hardMultiStake } =
+    useHardMultiStake();
+  const { state: unHardMultiStakeState, send: unHardMultiStake } =
+    useUnHardMultiStake();
+  const { state: approveAllState, send: approveAllSend } = useApproveForAll();
+  console.log({ approveAllState });
+  const handleMultistake = async () => {
+    if (selectedIds.length === 0) {
+      toast.error('Please select at least one token', {
+        position: toast.POSITION.TOP_RIGHT,
+        autoClose: 5000,
+      });
+      return;
+    } else {
+      let err = false;
+      selectedIds.forEach((id) => {
+        if (nftsList.find((nft) => nft.edition === id).type === 'Locked NFT') {
+          err = true;
+        }
+      });
+      if (err) {
+        toast.error('Please only select UnLocked NFTs', {
+          position: toast.POSITION.TOP_RIGHT,
+          autoClose: 5000,
+        });
+        return;
+      }
+      setLoadingFlag(true);
+      account && (await approveAllSend(StakingContractAddress, true));
+    }
+  };
+
+  const handleMultiunstake = async () => {
+    if (selectedIds.length === 0) {
+      toast.error('Please select at least one token', {
+        position: toast.POSITION.TOP_RIGHT,
+        autoClose: 5000,
+      });
+      return;
+    } else {
+      let err = false;
+      selectedIds.forEach((id) => {
+        if (nftsList.find((nft) => nft.edition === id).type !== 'Locked NFT') {
+          err = true;
+        }
+      });
+      if (err) {
+        toast.error('Please only select Locked NFTs', {
+          position: toast.POSITION.TOP_RIGHT,
+          autoClose: 5000,
+        });
+        return;
+      }
+      setLoadingFlag(true);
+      try {
+        const tx = await unHardMultiStake(selectedIds);
+        console.log('tx - ', tx);
+        setLoadingFlag(false);
+        toast.success('successful', {
+          position: toast.POSITION.TOP_RIGHT,
+          autoClose: 5000,
+        });
+      } catch (err) {
+        setLoadingFlag(false);
+        toast.success('failed', {
+          position: toast.POSITION.TOP_RIGHT,
+          autoClose: 5000,
+        });
+      }
+    }
+  };
 
   const nfts = async () => {
-    console.log(account, ContractAddressByRinkeby)
     const options = {
       // chain: 'ropsten',
       chain: 'eth',
       address: account,
       token_address: ContractAddressByRinkeby,
-    }
-    console.log('---moralis---->')
+    };
 
-    const result = await Web3Api.account.getNFTsForContract(options)
-    console.log('result-->', result)
-    return result
-  }
+    const result = await Web3Api.account.getNFTsForContract(options);
+    return result;
+  };
 
   const fixURL = (url) => {
     if (url.startsWith('ipfs')) {
       return (
         'https://ipfs.io/ipfs/' + url.split('ipfs://').slice(-1)[0]
         // .substring(0, url.split('ipfs://').slice(-1)[0].length - 1)
-      )
+      );
     } else {
-      return url + '?format=json'
+      return url + '?format=json';
     }
-  }
+  };
   const makeLinkURL = (url) => {
     if (url.startsWith('ipfs')) {
       return (
         'https://ipfs.io/ipfs/' +
-        url.split('ipfs://').slice(-1)[0].split('png')[0] +
-        'gif'
-      )
+        url.split('ipfs://').slice(-1)[0].split('png')[0]
+      );
     } else {
-      return url + '?format=json'
+      return url + '?format=json';
     }
-  }
+  };
 
-  const baseURI = useBaseURI()
-
+  const baseURI = useBaseURI();
   const getJsonData = async (url, index) => {
     try {
-      const response = await axios.get(fixURL(url) + index + '.json')
+      const response = await axios.get(fixURL(url) + index + '.json');
       return {
         attributes: response.data.attributes,
         dna: response.data.dna,
@@ -81,47 +154,47 @@ const Home = () => {
         name: response.data.name,
         link: makeLinkURL(response.data.image),
         type: '',
-      }
+      };
     } catch (ex) {
       //console.log(ex)
-      return null
+      return null;
     }
-  }
+  };
   const setNFTList = async () => {
-    const nftList = await nfts()
-    console.log('nftList', nftList)
-    let nsList = []
-    setNftsList([])
+    const nftList = await nfts();
+    let nsList = [];
+    setNftsList([]);
     for (let nft of nftList.result) {
-      console.log('---->')
-      console.log(nft)
-      console.log('baseURI------->', baseURI)
-
       if (baseURI) {
-        const json = await getJsonData(baseURI[0], nft.token_id)
-        console.log('json : ', json)
-        json['type'] = 'UnLocked NFT'
-        nsList.push(json)
+        const json = await getJsonData(baseURI[0], nft.token_id);
+        json['type'] = 'UnLocked NFT';
+        nsList.push(json);
       }
     }
 
-    console.log('here: ', lockNFTList)
-    const lockStakes = lockNFTList
+    const lockStakes = lockNFTList;
 
-    if (!lockStakes) return
+    if (!lockStakes) {
+      setNftsList(nsList);
+      return;
+    }
 
     for (let nft of lockStakes) {
       for (let item of nft) {
-        const json = await getJsonData(baseURI[0], item)
-        json['type'] = 'Locked NFT'
-        nsList.push(json)
+        const json = await getJsonData(baseURI[0], item);
+        let i = nsList.findIndex((nft) => nft.edition === item);
+        if (i >= 0) {
+          nsList[i].type = 'Locked NFT';
+        } else {
+          json['type'] = 'Locked NFT';
+          nsList.push(json);
+        }
       }
     }
-    setNftsList(nsList)
-    console.log(nsList)
-  }
+    setNftsList(nsList);
+  };
 
-  const { state: withDrawState, send: withdrawAURA } = useWithdrawAURA()
+  const { state: withDrawState, send: withdrawAURA } = useWithdrawAURA();
 
   const withDraw = async () => {
     try {
@@ -129,32 +202,39 @@ const Home = () => {
         toast.error('amount must not 0', {
           position: toast.POSITION.TOP_RIGHT,
           autoClose: 2000,
-        })
-        return
+        });
+        return;
       }
-      setLoadingFlag(true)
-      setOpen(false)
-      setAmount(0)
-      await withdrawAURA(amount)
-      setLoadingFlag(false)
+      setLoadingFlag(true);
+      setOpen(false);
+      setAmount(0);
+      await withdrawAURA(amount);
+      setLoadingFlag(false);
       toast.success('success', {
         position: toast.POSITION.TOP_RIGHT,
         autoClose: 2000,
-      })
+      });
     } catch (e) {
-      console.log('eeeeee', e)
-      setLoadingFlag(false)
+      setLoadingFlag(false);
       toast.error('error_mmm', {
         position: toast.POSITION.TOP_RIGHT,
         autoClose: 2000,
-      })
+      });
     }
-  }
+  };
   const closeWithDraw = () => {
-    setOpen(false)
-    setAmount(0)
-  }
-  const getUserBalance = useGetUserBalance(account)
+    setOpen(false);
+    setAmount(0);
+  };
+  const getUserBalance = useGetUserBalance(account);
+
+  const handleSelected = (id) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
 
   useEffect(() => {
     if (account) {
@@ -162,14 +242,24 @@ const Home = () => {
         toast.error('error', {
           position: toast.POSITION.TOP_RIGHT,
           autoClose: 5000,
-        })
-      setNFTList()
+        });
+      setNFTList();
     }
-  }, [account, lockNFTList])
-  // }, [account])
+  }, [account, lockNFTList, baseURI]);
+
+  useEffect(() => {
+    if (
+      approveAllState &&
+      approveAllState.status &&
+      approveAllState.status === 'Success'
+    ) {
+      console.log({ selectedIds });
+      hardMultiStake(selectedIds);
+    }
+  }, [approveAllState, selectedIds]);
 
   if (loadingFlag) {
-    return <Loading />
+    return <Loading />;
   }
 
   return (
@@ -206,9 +296,30 @@ const Home = () => {
             </li>
           </ul>
         </div>
-        {nftsList && <CardList nfts={nftsList} />}
+        {nftsList && (
+          <CardList
+            nfts={nftsList}
+            handleSelected={handleSelected}
+            selectedIds={selectedIds}
+          />
+        )}
 
-        <div className=' pt-10 pb-20 text-center w-full flex flex-wrap  items-center justify-between gap-y-10'>
+        <div className=' text-center w-full flex gap-4  items-center justify-between gap-y-10'>
+          <button
+            className='bg-multistake bg-[length:100%_100%] w-full text-lg font-bold rounded-2xl text-white py-5  hover:text-xl  focus:outline-none focus:ring focus:ring-indigo-300 shadow-lg shadow-indigo-700/50'
+            onClick={handleMultistake}
+          >
+            MULTISTAKE
+          </button>
+
+          <button
+            className='bg-withdrawBanner bg-[length:100%_100%] w-full text-lg font-bold rounded-2xl text-white py-5  hover:text-xl  focus:outline-none focus:ring focus:ring-indigo-300 shadow-lg shadow-indigo-700/50'
+            onClick={handleMultiunstake}
+          >
+            MULTIUNSTAKE
+          </button>
+        </div>
+        <div className=' pt-6 pb-20 text-center w-full flex flex-wrap  items-center justify-between gap-y-10'>
           <button
             className='bg-withdrawBanner bg-[length:100%_100%] w-full text-lg font-bold rounded-2xl text-white py-5  hover:text-xl  focus:outline-none focus:ring focus:ring-indigo-300 shadow-lg shadow-indigo-700/50'
             onClick={() => (account ? setOpen(true) : '')}
@@ -305,7 +416,7 @@ const Home = () => {
         </Transition.Root>
       </main>
     </AppLayout>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

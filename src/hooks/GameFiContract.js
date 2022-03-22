@@ -4,7 +4,9 @@ import { useCall, useContractFunction } from '@usedapp/core';
 import GameFiContractABI from '../abi/GameFiContractABI.json';
 import { ContractAddressByRinkeby } from '../contracts';
 
-const GameFiContractABIInterface = new ethers.utils.Interface(GameFiContractABI);
+const GameFiContractABIInterface = new ethers.utils.Interface(
+  GameFiContractABI
+);
 
 const GameFiContract = new Contract(
   ContractAddressByRinkeby,
@@ -12,21 +14,36 @@ const GameFiContract = new Contract(
 );
 
 export const useBaseURI = () => {
-  const { value, error } = useCall(ContractAddressByRinkeby && {
-    contract: new Contract(ContractAddressByRinkeby, GameFiContractABIInterface),
-    method: 'baseURI',
-    args: []
-  }) ?? {}
-  if(error) {
-    return undefined
+  const { value, error } =
+    useCall(
+      ContractAddressByRinkeby && {
+        contract: new Contract(
+          ContractAddressByRinkeby,
+          GameFiContractABIInterface
+        ),
+        method: 'baseURI',
+        args: [],
+      }
+    ) ?? {};
+  if (error) {
+    return undefined;
   }
   return value;
 };
 
-export const useApprove  = () => {
+export const useApprove = () => {
   const { state, send, event } = useContractFunction(
     GameFiContract,
     'approve',
+    {}
+  );
+  return { state, send, event };
+};
+
+export const useApproveForAll = () => {
+  const { state, send, event } = useContractFunction(
+    GameFiContract,
+    'setApprovalForAll',
     {}
   );
   return { state, send, event };

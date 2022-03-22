@@ -1,7 +1,7 @@
 import React, { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import { Mainnet, DAppProvider } from '@usedapp/core';
+import { Mainnet, DAppProvider, Ropsten } from '@usedapp/core';
 
 const HomePage = lazy(() => import('../pages/home'));
 const ErrorPage = lazy(() => import('../pages/error'));
