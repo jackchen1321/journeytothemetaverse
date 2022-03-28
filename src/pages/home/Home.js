@@ -40,7 +40,7 @@ const Home = () => {
   const { state: unHardMultiStakeState, send: unHardMultiStake } =
     useUnHardMultiStake();
   const { state: approveAllState, send: approveAllSend } = useApproveForAll();
-  console.log({ approveAllState });
+
   const handleMultistake = async () => {
     if (selectedIds.length === 0) {
       toast.error('Please select at least one token', {
@@ -253,7 +253,6 @@ const Home = () => {
       approveAllState.status &&
       approveAllState.status === 'Success'
     ) {
-      console.log({ selectedIds });
       hardMultiStake(selectedIds);
     }
   }, [approveAllState, selectedIds]);
